@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Train
+{% endblock %}
+
+{% block main %}
+<form action="/" method="post" enctype="multipart/form-data">
+
+    <div class="mb-3">
+        <input class="form-control mx-auto w-auto" type="file" name="file_upload" accept=".csv,.xls,.xlsx,.xlsm">
+
+    </div>
+    <div class="mb-3">
+        <button class="btn btn-secondary d-inline" type="submit" name="action" value="analyze">
+            Columns
+        </button>
+    </div>
+    <div class="mb-3">
+        {% for line in data_info %}
+        <p>{{ line }}</p>
+        {% endfor %}
+    </div>
+    <div class="mb-3">
+        <input class="form-control mx-auto w-auto mb-2" type="text" name="target" placeholder="Mục tiêu">
+
+    </div>
+    <div class="mb-3">
+        <input class="form-control mx-auto w-auto mb-2" type="text" name="layer_dims"
+            placeholder="Số lượng unit các lớp">
+    </div>
+    <div class="choices_container">
+        <label><input type="radio" name="choice" value="softmax">Softmax</label>
+        <label><input type="radio" name="choice" value="linear">Linear</label>
+        <label><input type="radio" name="choice" value="Sigmoid">Sigmoid</label>
+    </div>
+    <div class="slider_container">
+        <label for="range_slider" class="form-label">Batch size</label>
+        <input type="range" id="slider" class="form-range" id="range_slide" name="batch" min="5" max="10" step="1"
+            value="5" oninput="updateSliderValuebatch(this.value)">
+        <strong><span id="value_batch">32</span></strong>
+    </div>
+    <div class="slider_container">
+        <label for="range_slider" class="form-label">Epochs</label>
+        <input type="range" id="slider" class="form-range" id="range_slide" name="epochs" min="20" max="40" step="2"
+            value="20" oninput="updateSliderValueepoch(this.value)">
+        <strong><span id="value_epoch">20</span></strong>
+    </div>
+    <div class="slider_container">
+        <label for="range_slider" class="form-label">Learning Rate</label>
+        <input type="range" id="slider" class="form-range" id="range_slider" name="learning_rate" min="-4" max="0"
+            step="0.05" value="-4" oninput="updateSliderValuelearningrate(this.value)">
+        <!-- <div class="text-center"> -->
+        <strong><span id="value">0.00010</span></strong>
+        <!-- </div> -->
+
+    </div>
+    <div>
+        <button class="btn btn-secondary d-inline" type="submit" name="action" value="train">Train</button>
+    </div>
+    <div><span>{{daura}}</span></div>
+</form>
+<script>
+    function updateSliderValuelearningrate(value) {
+        let result = Math.pow(10, value);
+        document.getElementById('value').innerText = result.toFixed(5);
+    }
+    function updateSliderValuebatch(value) {
+        let result = value;
+        document.getElementById('value_batch').innerText = Math.pow(2, result);
+    }
+    function updateSliderValueepoch(value) {
+        document.getElementById('value_epoch').innerText = value;
+    }
+</script>
+{% endblock %}

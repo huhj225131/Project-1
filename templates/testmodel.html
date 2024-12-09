@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Train
+{% endblock %}
+
+{% block main %}
+<form action="/test" method="post" enctype="multipart/form-data">
+
+    <div class="mb-3">
+        <input class="form-control mx-auto w-auto" type="file" name="file_upload" accept=".csv,.xls,.xlsx,.xlsm">
+
+    </div>
+    <div class="choices_container">
+        <label><input type="radio" name="choice" value="kiemthu">Kiểm thử</label>
+        <label><input type="radio" name="choice" value="dudoan">Dự đoán</label>
+    </div>
+    <div>
+        <button class="btn btn-secondary d-inline" type="submit" name="action" value="test">Test</button>
+    </div>
+    <div><span>{{ketqua}}</span></div>
+</form>
+<!-- <script>
+    function updateSliderValuelearningrate(value) {
+        let result = Math.pow(10, value);
+        document.getElementById('value').innerText = result.toFixed(5);
+    }
+    function updateSliderValuebatch(value) {
+        let result = value;
+        document.getElementById('value_batch').innerText = Math.pow(2, result);
+    }
+    function updateSliderValueepoch(value) {
+        document.getElementById('value_epoch').innerText = value;
+    }
+</script> -->
+{% endblock %}
