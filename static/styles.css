@@ -32,7 +32,7 @@ table td {
     padding: 0.75rem;
     vertical-align: middle;
 } */
-#slider {
+.slider {
     width: 200px; /* Độ dài của thanh trượt */
     height: 10px; /* Độ cao của thanh trượt */
     border-radius: 5px; /* Làm cong các góc */
@@ -53,4 +53,88 @@ table td {
     margin: 20px 0; /* Khoảng cách trên và dưới container */
 
 }
+#file {
+    display: flex;               /* Sắp xếp nhãn và input ngang hàng */
+    align-items: center;         /* Căn giữa theo trục dọc */
+    gap: 5px; 
+    justify-content: center; 
+}
+#layers {
+    display: flex;               /* Sắp xếp nhãn và input ngang hàng */
+    align-items: center;         /* Căn giữa theo trục dọc */
+    gap: 5px; 
+    justify-content: center;
+}
+#add_delete {
+    display: flex;               /* Sắp xếp nhãn và input ngang hàng */
+    align-items: center;         /* Căn giữa theo trục dọc */
+    gap: 5px; 
+    justify-content: center;
+}
+label {
+    margin: 0;                   /* Xóa khoảng cách mặc định của label */
+    white-space: nowrap;       /* Đảm bảo label không xuống dòng */
+}
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Cột tự điều chỉnh */
+    gap: 10px; /* Khoảng cách giữa các ô */
+}
+
+.grid-item {
+    width: 100px;
+    border: 1px solid #ccc; /* Viền ô */
+    border-radius: 5px; /* Góc bo tròn */
+    text-align: center; /* Căn giữa nội dung */
+    padding: 10px;
+    cursor: pointer; /* Thêm hiệu ứng con trỏ */
+    background-color: #f9f9f9;
+    transition: background-color 0.3s;
+}
+
+.grid-item:hover {
+    background-color: #f0f0f0; /* Hiệu ứng khi di chuột */
+}
+
+.grid-item input {
+    display: none; /* Ẩn checkbox hoặc radio */
+}
+
+.grid-item.selected {
+    background-color: #d0e9ff; /* Màu khi được chọn */
+    border-color: #007bff;
+    font-weight: bold;
+}
+#loadingSpinner {
+    position: fixed; /* Cố định vòng xoay ở giữa màn hình */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999; /* Đảm bảo luôn ở trên cùng */
+    background-color: rgba(255, 255, 255, 0.8); /* Nền mờ */
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 6px solid #f3f3f3; /* Màu viền bên ngoài */
+    border-top: 6px solid #007bff; /* Màu viền bên trên */
+    border-radius: 50%; /* Hình tròn */
+    animation: spin 1s linear infinite; /* Hiệu ứng xoay */
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 

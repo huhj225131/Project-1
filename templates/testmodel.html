@@ -5,32 +5,46 @@ Train
 {% endblock %}
 
 {% block main %}
-<form action="/test" method="post" enctype="multipart/form-data">
+<form action="/test" method="post" id="uploadForm" enctype="multipart/form-data">
 
-    <div class="mb-3">
-        <input class="form-control mx-auto w-auto" type="file" name="file_upload" accept=".csv,.xls,.xlsx,.xlsm">
-
-    </div>
-    <div class="choices_container">
-        <label><input type="radio" name="choice" value="kiemthu">Kiểm thử</label>
-        <label><input type="radio" name="choice" value="dudoan">Dự đoán</label>
+    <div class="mb-3" id="file">
+        <input class="form-control w-auto" id="up" type="file" name="up" accept=".csv,.xls,.xlsx,.xlsm">
     </div>
     <div>
-        <button class="btn btn-secondary d-inline" type="submit" name="action" value="test">Test</button>
+        <button class="btn btn-secondary d-inline" type="submit" name="action" value="test">Predict</button>
     </div>
-    <div><span>{{ketqua}}</span></div>
 </form>
-<!-- <script>
-    function updateSliderValuelearningrate(value) {
-        let result = Math.pow(10, value);
-        document.getElementById('value').innerText = result.toFixed(5);
-    }
-    function updateSliderValuebatch(value) {
-        let result = value;
-        document.getElementById('value_batch').innerText = Math.pow(2, result);
-    }
-    function updateSliderValueepoch(value) {
-        document.getElementById('value_epoch').innerText = value;
-    }
-</script> -->
+<div style="margin-top: 10px; display: none;" id="dowload">
+
+</div>
+<script>
+   $("#uploadForm").on("submit", function (e) {
+    e.preventDefault();
+
+    let formData = new FormData(this); // Lấy dữ liệu từ form
+
+    // Hiển thị spinner để báo hiệu đang tải
+    $("#loadingSpinner").show();
+
+    $.ajax({
+        url: "/test", // URL của endpoint xử lý backend
+        type: "POST",
+        data: formData,
+        contentType: false, // Không xử lý dữ liệu content-type
+        processData: false, // Không xử lý dữ liệu processData
+        success: function (response) {
+
+            $("#dowload").show();
+        },
+        error: function (xhr, status, error) {
+        
+
+            // Xử lý lỗi và hiển thị thông báo
+            let errorMessage = xhr.responseJSON?.error || "Có lỗi xảy ra khi gửi dữ liệu.";
+            alert(errorMessage);
+        },
+    });
+});
+
+</script>
 {% endblock %}

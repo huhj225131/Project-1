@@ -1,0 +1,368 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Train
+{% endblock %}
+
+{% block main %}
+<!-- Nhập + Phân tích file đầu vào + Chọn feature + target cho mạng -->
+<form action="/" method="post" enctype="multipart/form-data" id="uploadForm" name="action" value="analyze">
+
+    <div class="mb-3" id="file">
+        <label for="train">Train file</label>
+        <input class="form-control w-auto" id="train" type="file" name="train" accept=".csv,.xls,.xlsx,.xlsm">
+
+    </div>
+
+    <div class="mb-3" id="file">
+        <label for="val">Validation file</label>
+        <input class="form-control  w-auto" id="val" type="file" name="val" accept=".csv,.xls,.xlsx,.xlsm">
+
+    </div>
+    <div class="mb-3" id="file">
+        <label for="test">Test file</label>
+        <input class="form-control  w-auto" id="test" type="file" name="test" accept=".csv,.xls,.xlsx,.xlsm">
+
+    </div>
+    <div class="mb-3">
+       
+        <button class="btn btn-secondary d-inline" type="submit" >
+            Analyze
+        </button>
+    </div>
+    <div id="loadingSpinner" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+    <div id="analysis" style="display:none;">
+        <h3>Columns</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Tên cột</th>
+                    <th>Loại</th>
+                    <th>Mô tả</th>
+                    <th>Số giá trị null</th>
+                </tr>
+            </thead>
+            <tbody id="columnInfoTable">
+
+            </tbody>
+        </table>
+
+        
+    </div>
+</form>
+
+<form action="/" method="post"  id="network" name="action" style="display: none;" value="train">
+    <div id="featureSelection" >
+        <h4 style="text-align: left;">Chọn Features:</h4>
+        <div class="grid-container" id="featureGrid"></div>
+    </div>
+    
+    <div id="targetSelection">
+        <h4 style="text-align: left;">Chọn Target:</h4>
+        <div class="grid-container" id="targetGrid"></div>
+    </div>
+
+    <div class="mb-3" id="add_delete" style="margin-top: 20px;">
+        <button class="btn btn-secondary d-inline" type="button"  id="add">
+            Add layer
+        </button>
+        <button class="btn btn-secondary d-inline" type="button"  id="delete">
+            Delete layer
+        </button>
+    </div>
+
+    <div id="layer_container" class="mb-3">
+        <div class="mb-3" id="layer_1" name="layer_1" style="display: flex;              
+                                                align-items: center;         
+                                                gap: 5px; 
+                                                justify-content: center;">
+            <label for="unit_1">Layer 1</label>
+            <input class="form-control w-auto"   id="unit_1" type="number"  placeholder="Units">
+            <select id="activation_1" class="form-control w-auto" >
+                <option selected disabled>Activation</option>
+                <option value="relu">Relu</option>
+                <option value="linear">Linear</option>
+                <option value="sigmoid">Sigmoid</option>
+                <option value="softmax">Softmax</option>
+            </select>
+            
+        </div>
+    </div>
+
+    <div class="slider_container">
+        <label for="batch_size" class="form-label">Batch size</label>
+        <input type="range"  class="form-range slider" id="batch_size" name="batch" min="5" max="10" step="1"
+            value="6" oninput="updateSliderValuebatch(this.value)">
+        <strong><span id="value_batch">64</span></strong>
+    </div>
+    <div class="slider_container">
+        <label for="epoch" class="form-label">Epochs</label>
+        <input type="range" class="form-range slider" id="epoch" name="epochs" min="20" max="40" step="2"
+            value="24" oninput="updateSliderValueepoch(this.value)">
+        <strong><span id="value_epoch">24</span></strong>
+    </div>
+    <div class="slider_container">
+        <label for="learning_rate" class="form-label">Learning Rate</label>
+        <input type="range" class="form-range slider" id="learning_rate"  min="-4" max="0"
+            step="0.05" value="-2" oninput="updateSliderValuelearningrate(this.value)">
+        <!-- <div class="text-center">
+            <strong><span id="value">0.01000</span></strong>
+        </div> -->
+        <strong><span id='value_learning_rate'>0.01000</span></strong>
+
+    </div>
+    <div>
+        <button class="btn btn-secondary d-inline" type="submit"  >Train</button>
+    </div>
+    <div id="result"></div>
+
+</form>
+
+<script>
+    function updateSliderValuelearningrate(value) {
+        let result = Math.pow(10, value);
+        document.getElementById('value_learning_rate').innerText = result.toFixed(5);
+    }
+    function updateSliderValuebatch(value) {
+        let result = value;
+        document.getElementById('value_batch').innerText = Math.pow(2, result);
+    }
+    function updateSliderValueepoch(value) {
+        document.getElementById('value_epoch').innerText = value;
+    }
+
+    $("#uploadForm").on("submit", function (e) {
+        e.preventDefault();
+
+        let formData = new FormData(this); // Lấy dữ liệu từ form
+        $("#loadingSpinner").show(); // Hiển thị spinner trong khi đang xử lý
+
+        $.ajax({
+            url: "/", // URL của endpoint xử lý backend
+            type: "POST",
+            data: formData,
+            contentType: false, // Không xử lý dữ liệu content-type
+            processData: false, // Không xử lý dữ liệu processData
+            success: function (response) {
+                $("#loadingSpinner").hide(); // Tắt spinner sau khi xử lý xong
+                $("#analysis").show(); // Hiển thị khu vực phân tích
+
+                if (response.columns) {
+                    // Xóa nội dung cũ nếu có
+                    $("#featureGrid").empty();
+                    $("#targetGrid").empty();
+                    $("#columnInfoTable").empty();
+
+                    columnTable = $("#columnInfoTable");
+                    // Duyệt qua từng cột và hiển thị thông tin
+                    for (const [column, info] of Object.entries(response.columns)) {
+                        // Hiển thị thông tin chi tiết từng cột
+
+                        let columnInfo = "";
+                        if (info.type === "numeric") {
+                            columnInfo = `
+                    <p>Count: ${info.describe.count}, Mean: ${info.describe.mean.toFixed(2)}, Std Dev: ${info.describe.std.toFixed(2)}</p>
+                    <p>25%: ${info.describe['25%']}, 50%: ${info.describe['50%']}, 75%: ${info.describe['75%']},</p>
+                    <p>Min: ${info.describe.min}, Max: ${info.describe.max}</p>  `;
+                        }
+                        else if (info.type === "categorical") {
+                            columnInfo = `
+                            <p>Count: ${info.describe.count}</p>
+                            <p>Unique: ${info.describe.unique_numbers}</p>
+                            <p>Unique Values: ${info.unique_values.slice(0, 7).join(", ") +
+                                (info.unique_values.length > 7 ? "..." : "")
+                                }</p>`;
+                        }
+                        let row = `
+                <tr>
+                    <td>${column}</td>
+                    <td>${info.type}</td>
+                    <td style="text-align: left;">${columnInfo}</td>
+                    <td>${info.null_count}</td>
+                </tr>`;
+                        columnTable.append(row);
+
+
+                        // Thêm cột vào danh sách Features
+                        let featureItem = `
+                        <div class="grid-item" data-column="${column}">
+                            <input type="checkbox" id="feature_${column}" name="features" value="${column}">
+                            <label for="feature_${column}">${column}</label>
+                        </div>`;
+                        $("#featureGrid").append(featureItem);
+
+                        // Thêm cột vào danh sách Target
+                        let targetItem = `
+                        <div class="grid-item" data-column="${column}">
+                            <input type="radio" id="target_${column}" name="target" value="${column}">
+                            <label for="target_${column}">${column}</label>
+                        </div>`;
+                        $("#targetGrid").append(targetItem);
+                    }
+
+                    // Xử lý chọn Features (toggle class "selected")
+                    $("#featureGrid .grid-item").on("click", function () {
+                        $(this).toggleClass("selected");
+                        let checkbox = $(this).find("input[type='checkbox']");
+                        checkbox.prop("checked", !checkbox.prop("checked"));
+                    });
+
+                    // Xử lý chọn Target (chỉ chọn một)
+                    $("#targetGrid .grid-item").on("click", function () {
+                        $("#targetGrid .grid-item").removeClass("selected");
+                        $(this).addClass("selected");
+                        $(this).find("input[type='radio']").prop("checked", true);
+                    });
+
+                    // Hiển thị nút Start
+                    $("#network").show();
+                } else {
+                    alert("Không có cột nào để hiển thị thông tin.");
+                }
+            },
+            error: function (xhr, status, error) {
+                $("#loadingSpinner").hide(); // Tắt spinner
+                let errorMessage = xhr.responseJSON?.error || "Có lỗi xảy ra khi gửi dữ liệu.";
+                alert(errorMessage);
+            },
+        });
+    });
+    // Script thêm/xóa layers
+// Script thêm/xóa layers
+const addButton = document.getElementById('add');
+const deleteButton = document.getElementById('delete');
+const layerContainer = document.getElementById('layer_container');
+
+let layerCount = 1; // Đếm số lượng layer hiện có
+
+// Hàm thêm layer
+addButton.addEventListener('click', () => {
+    layerCount++;
+
+    const newLayer = document.createElement('div');
+    newLayer.classList.add('mb-3');
+    newLayer.id = `layer_${layerCount}`;
+    newLayer.setAttribute('name', `layer_${layerCount}`);
+    newLayer.style.display = "flex";
+    newLayer.style.alignItems = "center";
+    newLayer.style.gap ="5px";
+    newLayer.style.justifyContent = "center";
+    newLayer.innerHTML = `
+        <label for="unit_${layerCount}">Layer ${layerCount}</label>
+        <input class="form-control w-auto" id="unit_${layerCount}" name="unit" type="number" placeholder="Units">
+        <select id="activation_${layerCount}" name="activation" class="form-control w-auto">
+            <option selected disabled>Activation</option>
+            <option value="relu">Relu</option>
+            <option value="linear">Linear</option>
+            <option value="sigmoid">Sigmoid</option>
+            <option value="softmax">Softmax</option>
+        </select>
+    `;
+
+    layerContainer.appendChild(newLayer);
+});
+
+// Hàm xóa layer cuối cùng
+deleteButton.addEventListener('click', () => {
+    if (layerCount > 1) {
+        const lastLayer = document.getElementById(`layer_${layerCount}`);
+        if (lastLayer) {
+            layerContainer.removeChild(lastLayer);
+            layerCount--;
+        }
+    } else {
+        alert('Không thể xóa layer cuối cùng!');
+    }
+});
+
+
+$("#network").on("submit", function (e) {
+    e.preventDefault(); // Ngăn chặn hành vi gửi form mặc định
+
+    // Thu thập các Feature được chọn
+    const selectedFeatures = [];
+    $("#featureGrid .grid-item.selected input[type='checkbox']").each(function () {
+        selectedFeatures.push($(this).val());
+    });
+
+    // Thu thập Target được chọn
+    const selectedTarget = $("#targetGrid .grid-item.selected input[type='radio']").val();
+
+    // Thu thập thông tin các layers
+    const layers = [];
+    for (let i = 1; i <= layerCount; i++) {
+        const units = $(`#unit_${i}`).val();
+        const activation = $(`#activation_${i}`).val();
+        if (units && activation) {
+            layers.push({ units, activation });
+        }
+    }
+
+    // Thu thập các tham số cấu hình
+    const batch_size = $("#batch_size").val();
+    const epoch = $("#epoch").val();
+    const learning_rate = $("#learning_rate").val();
+
+    // Kiểm tra dữ liệu đã được chọn đầy đủ chưa 
+    if (selectedFeatures.length === 0) {
+        alert("Bạn cần chọn ít nhất một Feature.");
+        return;
+    }
+    if (!selectedTarget) {
+        alert("Bạn cần chọn một Target.");
+        return;
+    }
+    if (layers.length === 0) {
+        alert("Bạn cần thêm ít nhất một layer.");
+        return;
+    }
+
+    // Tạo đối tượng dữ liệu để gửi đi
+    const data = {
+    selectedFeatures: selectedFeatures,
+    selectedTarget: selectedTarget,
+    layers: layers,
+    batch_size: batch_size,
+    epoch: epoch,
+    learning_rate: learning_rate
+};
+
+$.ajax({
+    url: "/",
+    type: "POST",
+    contentType: "application/json", 
+    data: JSON.stringify(data),
+    success: function (response) {
+        const { train, val, test } = response;
+
+        // Tìm phần tử với id="result"
+        const resultElement = document.getElementById("result");
+
+        // Kiểm tra phần tử tồn tại và in ra kết quả
+        if (resultElement) {
+            resultElement.innerHTML = `
+                <p>Kết quả trên tập train là: ${train}</p>
+                <p>Kết quả trên tập val là: ${val}</p>
+                <p>Kết quả trên tập test là: ${test}</p>
+            `;
+        } else {
+            console.error("Không tìm thấy phần tử với id='result'");
+        }
+    },
+    error: function (xhr, status, error) {
+        console.error("Có lỗi khi gửi dữ liệu:", error);
+    }
+});
+});
+
+
+
+
+    
+
+ </script>
+{% endblock %}
+
+
