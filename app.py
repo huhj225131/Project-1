@@ -252,4 +252,4 @@ def test():
 
         df.to_excel(f"predicted_labels {target}.xlsx", index=False)
 
-        return jsonify({"message": "đã dự đoạn thành côngcông"}), 200
+        return jsonify({"message": "đã dự đoạn thành công"}), 200
